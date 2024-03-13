@@ -1,0 +1,298 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Caption("Commission Report Selection")
+Gui.Form..Size(5865,2655)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.dtpStartDate.Create(DatePicker)
+Gui.Form.dtpStartDate.Size(2235,285)
+Gui.Form.dtpStartDate.Position(360,450)
+Gui.Form.dtpStartDate.TabStop(True)
+Gui.Form.dtpStartDate.TabIndex(1)
+Gui.Form.lbl1.Create(Label,"Start Date",True,1935,255,0,360,195,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl2.Create(Label,"End Date",True,1935,255,0,2970,195,True,0,"Arial",8,-2147483633,0)
+Gui.Form.dtpEndDate.Create(DatePicker)
+Gui.Form.dtpEndDate.Size(2355,285)
+Gui.Form.dtpEndDate.Position(3000,450)
+Gui.Form.dtpEndDate.TabStop(True)
+Gui.Form.dtpEndDate.TabIndex(2)
+Gui.Form.lbl3.Create(Label,"Sales Rep ID",True,1020,255,0,360,1005,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl4.Create(Label,"Name",True,1110,255,0,1770,1005,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txtSalesRepID.Create(TextBox,"",True,1005,300,0,360,1215,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtSalesRepID.TabStop(True)
+Gui.Form.txtSalesRepID.TabIndex(3)
+Gui.Form.txtSalesRepName.Create(TextBox,"",True,2175,300,0,1770,1215,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtSalesRepName.TabStop(True)
+Gui.Form.txtSalesRepName.TabIndex(4)
+Gui.Form.cmdBrowseSalesRep.Create(Button)
+Gui.Form.cmdBrowseSalesRep.Size(570,330)
+Gui.Form.cmdBrowseSalesRep.Position(4260,1200)
+Gui.Form.cmdBrowseSalesRep.Caption("^")
+Gui.Form.cmdBrowseSalesRep.Event(Click,cmdBrowseSalesRep_Click)
+Gui.Form.cmdBrowseSalesRep.TabStop(True)
+Gui.Form.cmdBrowseSalesRep.TabIndex(5)
+Gui.Form.cmdRunReport.Create(Button)
+Gui.Form.cmdRunReport.Size(1455,375)
+Gui.Form.cmdRunReport.Position(360,1725)
+Gui.Form.cmdRunReport.Caption("Run Report")
+Gui.Form.cmdRunReport.TabStop(True)
+Gui.Form.cmdRunReport.TabIndex(6)
+Gui.Form.cmdRunReport.Event(Click,cmdRunReport_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'BN, Oct 1, 2018
+'Customer: Wagman Metal Products, Inc.
+'Project 5303 - This project will pull the invoices paid and calculate the commission for the Sales Rep
+'This script will calculate that commision
+'Script GCG_5303_Commission_Maintenance will maintain the commission type and rate based on ranges.
+
+F.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	
+	f.ODBC.Connection!conx.OpenCompanyConnection
+	gui.Form..Show
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry	
+Program.Sub.Main.End
+
+Program.Sub.Form_UnLoad.Start
+F.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	f.Intrinsic.Control.If(v.ODBC.conx.State,=,1)
+		f.ODBC.Connection!conx.Close
+	f.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.End
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.cmdBrowseSalesRep_Click.Start
+'Browse Sales Person
+F.Intrinsic.Control.Try
+	v.Local..BulkDeclareString(sError,sRet)
+
+	F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+	Function.Intrinsic.UI.Browser("Select Sales Person","conx","SELECT SALESPERSON_CODE AS Code, SALESPERSON AS SalesPerson FROM SALESPEOPLE WHERE KEY1 = 'AR ' AND KEY2 = 'SLM' AND SALESPERSON_CODE > '' ORDER BY Code","Code*!*SalesPerson","300*!*2000",Variable.Local.sRet)	
+	
+	F.Intrinsic.Control.If(Variable.Local.sRet.IsCancel,=,False)
+		F.Intrinsic.String.Split(Variable.Local.sRet,"*!*",Variable.Local.sRet)
+		gui.Form.txtSalesRepID.Text(v.Local.sRet(0))
+		gui.Form.txtSalesRepName.Text(v.Local.sRet(1))
+	F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdBrowseSalesRep_Click.End
+
+Program.Sub.cmdRunReport_Click.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare
+	v.Local.sSQL.Declare
+	v.Local.sStart.Declare
+	v.Local.sEnd.Declare
+	v.Local.sInvoices.Declare
+	v.Local.sRet.Declare
+	v.Local.bInternal.Declare
+	v.Local.iCnt.Declare
+	v.Local.sFilter.Declare
+	v.Local.fComRate.Declare
+	v.Local.sHold.Declare
+	v.Local.sRate1.Declare
+	v.Local.sRate2.Declare
+	v.Local.sRate3.Declare
+	v.Local.sDiscountRate.Declare
+	v.Local.sPctPaid.Declare
+	v.Local.fHold.Declare
+	v.Local.sSalesRepCodes.Declare
+	v.Local.sSalesRepName.Declare
+		
+	gui.Form..Visible(False)
+	f.Intrinsic.UI.InvokeWaitDialog("Processing...")
+	'Format date
+	f.Intrinsic.String.Format(v.Screen.Form!dtpStartDate.Value,"YYYY-MM-DD",v.Local.sStart)
+	f.Intrinsic.String.Format(v.Screen.Form!dtpEndDate.Value,"YYYY-MM-DD",v.Local.sEnd)
+	
+	'Get sales Person codes by name
+	f.Intrinsic.String.Build("SELECT SALESPERSON_CODE AS Code FROM SALESPEOPLE WHERE KEY1 = 'AR ' AND KEY2 = 'SLM' AND SALESPERSON_CODE > '' and ltrim(rtrim(SALESPERSON ))= '{0}'  ORDER BY Code",v.Screen.Form!txtSalesRepName.Text.Trim,v.Local.sSQL)
+	f.ODBC.Connection!conx.executeAndReturn(v.Local.sSQL,v.Local.sRet)
+	f.Intrinsic.Control.If(v.Local.sRet,<>,"")
+		f.Intrinsic.String.replace(v.Local.sRet,"#$#","','",v.Local.sSalesRepCodes)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.UI.Msgbox("There is no Sales Rep with the name specified","End program")
+		f.Intrinsic.Control.CallSub("Form_Unload")
+	f.Intrinsic.Control.EndIf
+		
+	'Get Percent Payment of Invoice for a Salesperson within a date range
+	f.Intrinsic.String.Build("Select INVOICE, (0 - SUM(AMT_INVOICE)) as AmtPaid from V_AR_Open_Items where Batch_Code = '11' and AMT_TRANS_TOTAL <> 0 and SalesPerson in ('{0}') and Date_Transaction between '{1}' and '{2}' Group by Invoice",v.Local.sSalesRepCodes,v.Local.sStart,v.Local.sEnd,v.Local.sSQL)
+	f.Data.DataTable.CreateFromSQL("PctPaid_DT","conx",v.Local.sSQL,True)
+	
+	'Create a list of Invoices
+	f.Data.DataView.Create("PctPaid_DT","PctPaid_DV",22,"","")
+	f.Data.DataView.ToString("PctPaid_DT","PctPaid_DV","INVOICE","","','",v.Local.sInvoices)
+	
+	'Create Dictionary AmtPaid_Dict(Invoice,AmtPaid)
+	Function.Data.Dictionary.CreateFromDataTable("AmtPaid_Dict","PctPaid_DT","INVOICE","AmtPaid")
+	f.Data.Dictionary.SetDefaultReturn("AmtPaid_Dict",0)
+	'Create Dictionary AmtInvoice_Dict(Invoice,AmtInvoice)
+	F.Data.Dictionary.CreateFromSQL("AmtInvoice_Dict","conx","SELECT INVOICE,SUM(EXTENSION) as AmtInvoice FROM V_ORDER_HIST_LINE where extension > 0 and (line_type = 'S' or LINE_TYPE = 'D') GROUP BY INVOICE")
+	f.Data.Dictionary.SetDefaultReturn("AmtInvoice_Dict",0)
+	
+	'SQL 1
+	'Get Order Hist Line of those Invoices
+ 	f.Intrinsic.String.Build("SELECT INVOICE,CUSTOMER,ORDER_NO,SALESPERSON,LINE_TYPE,PART,LOCATION,DESCRIPTION,PRODUCT_LINE,DISCOUNT,PRICE,PRICE_DISCOUNT,EXTENSION,AMT_DISCOUNT,QTY_SHIPPED,DATE_INVOICE, Name_cust_ship,Attention_ship,Address1_ship, Address2_ship,Address3_ship,Address4_ship,Address5_ship,City_ship, state_ship,zip_ship,country_ship FROM V_ORDER_HIST_LINE  WHERE INVOICE in ('{0}') and (Line_Type = 'S' or Line_type = 'F' or Line_Type = 'D')",v.Local.sInvoices,V.Local.sSQL) 	
+ 	
+	f.Data.DataTable.CreateFromSQL("OrdHist","conx",v.Local.sSQL,True)
+	
+	'Populate the PctPaid, AmtPaid, AmtInvoice	
+	F.Data.DataTable.AddColumn("OrdHist","AmtPaid","Float",0)
+	f.Data.DataTable.FillFromDictionary("OrdHist","AmtPaid_Dict","INVOICE","AmtPaid")
+	F.Data.DataTable.AddColumn("OrdHist","AmtInvoice","Float",0)
+	f.Data.DataTable.FillFromDictionary("OrdHist","AmtInvoice_Dict","INVOICE","AmtInvoice")
+	f.Data.DataTable.AddColumn("OrdHist","PctPaid","Float",0)
+	
+	'Add column Commission Pct
+	F.Data.DataTable.AddColumn("OrdHist","ComPct","Float",0)	
+
+	v.Local.sSalesRepName.Set(v.Screen.Form!txtSalesRepName.Text.Trim)
+	f.Intrinsic.Control.If(v.Local.sRet.Left1,=,"*")
+		v.Local.bInternal.Set(False)
+	F.Intrinsic.Control.Else
+		V.Local.bInternal.Set(True)
+	f.Intrinsic.Control.EndIf
+	
+	'Get Commission Type table
+	f.Data.DataTable.CreateFromSQL("Com_DT","conx","Select Product_Line,Type,Internal_Rate,External_Rate,SlideRangeCom from GCG_5303_Com_Type",True)
+	f.Data.DataView.Create("Com_DT","Com_DV")
+	'Get slide commission rate
+	f.Data.DataView.SetFilter("Com_DT","Com_DV","Product_Line = '~~'")
+	f.Intrinsic.String.Split(v.DataView.Com_DT!Com_DV(0).SlideRangeCom!FieldValString,"***",v.Local.sHold)
+	f.Intrinsic.Math.Div(v.Local.sHold(0).Trim,100,v.Local.sRate1)
+	f.Intrinsic.Math.Div(v.Local.sHold(1).Trim,100,v.Local.sRate2)
+	f.Intrinsic.Math.Div(v.Local.sHold(2).Trim,100,v.Local.sRate3)
+	
+	'Loop the OrderHist, determine slide/flat commission, determine Internal/External Sales Person => commission rate => commission amount
+	f.Intrinsic.Control.For(v.Local.iCnt,0,v.DataTable.OrdHist.RowCount--,1)
+		v.Local.fHold.Set(v.DataTable.OrdHist(v.Local.iCnt).AmtInvoice!FieldValString)
+		f.Intrinsic.Control.If(v.Local.fHold,<>,0)
+			f.Intrinsic.Math.Div(v.DataTable.OrdHist(v.Local.iCnt).AmtPaid!FieldValString,v.Local.fHold,v.Local.fHold)
+			f.Intrinsic.String.Format(v.Local.fHold,"#.000000",v.Local.sPctPaid)
+			v.Local.fHold.Set(v.Local.sPctPaid)
+			f.Data.DataTable.SetValue("OrdHist",v.Local.iCnt,"PctPaid",v.Local.fHold)
+		f.Intrinsic.Control.EndIf		
+		
+		f.Intrinsic.String.Build("Product_Line = '{0}'",v.DataTable.OrdHist(v.Local.iCnt).Product_Line!FieldValString,v.Local.sFilter)
+		f.Data.DataView.SetFilter("Com_DT","Com_DV",V.Local.sFilter)
+		
+		f.Intrinsic.Control.If(v.Dataview.Com_DT!Com_DV.RowCount,=,0)
+			v.Local.fComRate.Set(0)
+			v.Local.sDiscountRate.set(v.DataTable.OrdHist(v.Local.iCnt).Discount!FieldValString)
+			f.Intrinsic.Control.GoTo("Skip")
+		f.Intrinsic.Control.EndIf
+		
+		f.Intrinsic.Control.If(v.DataView.Com_DT!Com_DV(0).Type!FieldValTrim,=,"Flat")
+			f.Intrinsic.Control.If(v.Local.bInternal)
+				v.Local.fComRate.Set(v.DataView.Com_DT!Com_DV(0).Internal_Rate!FieldValString)
+			f.Intrinsic.Control.Else
+			 	v.Local.fComRate.Set(v.DataView.Com_DT!Com_DV(0).External_Rate!FieldValString)
+			f.Intrinsic.Control.EndIf
+		f.Intrinsic.Control.ElseIf(v.DataView.Com_DT!Com_DV(0).Type!FieldValTrim,=,"Slide")
+			v.Local.sDiscountRate.set(v.DataTable.OrdHist(v.Local.iCnt).Discount!FieldValString)
+			f.Intrinsic.Control.If(v.Local.sDiscountRate,<=,0.39)
+				v.Local.fComRate.Set(v.Local.sRate1)
+			f.Intrinsic.Control.ElseIf(v.Local.sDiscountRate,<=,0.49)
+				v.Local.fComRate.Set(v.Local.sRate2)
+			f.Intrinsic.Control.Else
+				v.Local.fComRate.Set(v.Local.sRate3)
+			f.Intrinsic.Control.EndIf
+		f.Intrinsic.Control.EndIf
+		
+		f.Intrinsic.Control.Label("Skip")
+		'Revesrse the fComRate if the AmtPaid is negative
+		F.Intrinsic.Control.If(v.DataTable.OrdHist(v.Local.iCnt).AmtPaid!FieldValFloat,<,0)
+			f.Intrinsic.Math.Sub(0,v.Local.fComRate,v.Local.fComRate)
+		F.Intrinsic.Control.EndIf
+		f.Data.DataTable.SetValue("OrdHist",v.Local.iCnt,"ComPct",v.Local.fComRate)
+	f.Intrinsic.Control.Next(v.Local.iCnt)
+	
+	F.Data.DataTable.AddExpressionColumn("OrdHist","ComAmt","Float","IIF([PctPaid] > 1,[ComPct] * [Extension],[ComPct] * [Extension] * [PctPaid])")
+	F.Data.DataTable.AddColumn("OrdHist","Userid","String",v.Caller.user)
+	
+	'Get only AmtPaid > 0
+	f.Intrinsic.Control.If(v.DataView.OrdHist!ODV.Exists)
+		f.Data.DataView.Close("OrdHist","ODV")
+	f.Intrinsic.Control.EndIf
+	f.Data.DataView.Create("OrdHist","ODV",22,"AmtPaid > 0","")
+	f.Intrinsic.Control.If(v.DataTable.OrdHistToReport.Exists)
+		f.Data.DataTable.Close("OrdHistToReport")
+	f.Intrinsic.Control.EndIf
+	f.Data.DataView.ToDataTable("OrdHist","ODV","OrdHistToReport")	
+	
+	'Delete GCG_5303_com by userID
+	F.Intrinsic.String.Build("Delete from GCG_5303_Com Where UserID = '{0}'",V.Caller.User,V.Local.sSQL)
+	F.ODBC.Connection!conx.Execute(v.Local.sSQL)
+	f.Data.DataTable.SaveToDB("OrdHistToReport","conx","GCG_5303_Com","",128)
+	
+	'Call BI report
+	f.Intrinsic.Control.CallSub("Print_Report","StartDate",v.Local.sStart,"EndDate",v.Local.sEnd,"sSalesRepCodes",v.Local.sSalesRepCodes)
+	
+	f.ODBC.Connection!conx.Close
+	f.Intrinsic.UI.CloseWaitDialog
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub("Form_Unload")
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdRunReport_Click.End
+
+Program.Sub.Print_Report.Start
+f.Intrinsic.Control.Try
+v.Local..BulkDeclareLong(iBIRunID,iRptID,iBILogID)
+v.Local..BulkDeclareString(sError,sVal,sSalesRepCodes)
+	f.Intrinsic.String.Replace(v.Args.sSalesRepCodes,"','",",",v.Local.sSalesRepCodes)
+	
+	'1/Run Detail Report
+	f.Intrinsic.UI.InvokeWaitDialog("Generating report detail report...")	
+	'Log Report
+	F.Global.BI.GetRunID(v.Local.iBIRunID)
+	f.Global.BI.GetIDFromName("GCG_5303_Commission_Detail.rpt",True,v.Local.iRptID)
+	F.Global.BI.StartLogging(v.Local.iBIRunID,v.Local.iRptID,-1,"",v.Local.iBILogID)	
+	'Stop Logging
+	F.Global.BI.StopLogging(v.Local.iBILogID)
+	f.Intrinsic.String.Build("{0}*!*{1} - {2}*!*{3} - {4}",v.Caller.User,v.Local.sSalesRepCodes,v.Screen.Form!txtSalesRepName.Text.Trim,v.Args.StartDate,v.Args.EndDate,v.Local.sVal)
+	
+	f.Intrinsic.UI.CloseWaitDialog
+	F.Global.BI.RunReportPreProcessor(v.Local.iBIRunID,v.Local.iBILogID,"UserID*!*SalesPerson*!*DateRange",V.Local.sVal,"",-1,True,"",-1,"",-1,"","",v.Local.iBIRunID)
+	
+	'2/Run Summary Report
+	f.Intrinsic.UI.InvokeWaitDialog("Generating summary report...")
+	'Log Report
+	F.Global.BI.GetRunID(v.Local.iBIRunID)
+	f.Global.BI.GetIDFromName("GCG_5303_Commission_Summary.rpt",True,v.Local.iRptID)
+	F.Global.BI.StartLogging(v.Local.iBIRunID,v.Local.iRptID,-1,"",v.Local.iBILogID)	
+	'Stop Logging
+	F.Global.BI.StopLogging(v.Local.iBILogID)
+	F.Global.BI.RunReportPreProcessor(v.Local.iBIRunID,v.Local.iBILogID,"UserID*!*SalesPerson*!*DateRange",V.Local.sVal,"",-1,True,"",-1,"",-1,"","",v.Local.iBIRunID)
+	
+	f.Intrinsic.UI.CloseWaitDialog
+F.Intrinsic.Control.Catch
+F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+F.Intrinsic.UI.Msgbox(V.Local.sError)
+F.Intrinsic.Control.EndTry
+Program.Sub.Print_Report.End
