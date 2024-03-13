@@ -1,0 +1,177 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Caption("Commission Maintenance")
+Gui.Form..Size(10710,11865)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.gsPLC.Create(GsGridControl)
+Gui.Form.gsPLC.Size(10050,8565)
+Gui.Form.gsPLC.Position(240,375)
+Gui.Form.lbl5.Create(Label,"Discount Range",True,1410,255,0,285,9165,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txt1.Create(TextBox,"0-39%]",True,885,300,0,330,9705,False,1,"Arial",8,-2147483643,1)
+Gui.Form.lbl6.Create(Label,"Range 1",True,900,255,0,330,9495,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl7.Create(Label,"Range 3",True,900,255,0,2505,9495,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl8.Create(Label,"Range 2",True,900,255,0,1380,9495,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txt2.Create(TextBox,">39 - 49%]",True,960,300,0,1395,9705,False,1,"Arial",8,-2147483643,1)
+Gui.Form.txt3.Create(TextBox,">49%",True,900,300,0,2505,9705,False,1,"Arial",8,-2147483643,1)
+Gui.Form.lbl9.Create(Label,"Commission Percent",True,1695,255,0,285,10245,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txtRange1_Rate.Create(TextBox,"10",True,885,300,0,330,10485,True,1,"Arial",8,-2147483643,1)
+Gui.Form.txtRange1_Rate.NumericOnly(1)
+Gui.Form.txtRange2_Rate.Create(TextBox,"7",True,885,300,0,1395,10485,True,1,"Arial",8,-2147483643,1)
+Gui.Form.txtRange2_Rate.NumericOnly(1)
+Gui.Form.txtRange3_Rate.Create(TextBox,"5",True,885,300,0,2505,10485,True,1,"Arial",8,-2147483643,1)
+Gui.Form.txtRange3_Rate.NumericOnly(1)
+Gui.Form.cmdSave.Create(Button)
+Gui.Form.cmdSave.Size(855,375)
+Gui.Form.cmdSave.Position(345,10980)
+Gui.Form.cmdSave.Caption("Save")
+Gui.Form.cmdSave.Event(Click,cmdSave_Click)
+Gui.Form.lbl10.Create(Label,"%",True,570,255,0,3450,10575,True,0,"Arial",8,-2147483633,0)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'BN, Oct 1, 2018
+'Customer: Wagman Metal Products, Inc.
+'Project 5303 - This project will pull the invoices paid and calculate the commission for the Sales Rep
+'This script will maintain the commission type and rate based on ranges.
+'Script GCG_5303_Commission_Report will calculate the commisison.
+'gsPLC : gsGrid for Product Line Commission type Flat/Slide and the Internal rate for Internal Sales Rep and External rate for Extenal Sales Rep
+F.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	F.ODBC.Connection!conx.OpenCompanyConnection
+	f.Intrinsic.Control.CallSub("Bind_Grid")
+	f.Intrinsic.Control.CallSub("Bind_Discount_Slide_Commission")
+
+	gui.Form..Show
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.Form_UnLoad.Start
+F.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	'Check connection if open, close it
+	F.Intrinsic.Control.If(V.ODBC.conx.State,=,1)
+		F.ODBC.Connection!conx.close
+	F.Intrinsic.Control.EndIf	
+	
+	f.Intrinsic.Control.End
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.cmdSave_Click.Start
+F.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	v.Local.sHold.Declare
+	v.Local.sSQL.Declare
+	v.Local.sRet.Declare
+	
+	f.Intrinsic.UI.InvokeWaitDialog("Saving...")
+	f.Intrinsic.Control.If(v.Screen.Form!txtRange1_Rate.Text,<,0,or,v.Screen.Form!txtRange2_Rate.Text,<,0,v.Screen.Form!txtRange3_Rate.Text,<,0)
+		f.Intrinsic.UI.Msgbox("Slide Commission must not be negative","Invalid")
+		f.Intrinsic.UI.CloseWaitDialog
+		f.Intrinsic.Control.exitsub
+	f.Intrinsic.Control.EndIf
+	
+	'Save product line
+	f.Data.DataTable.SaveToDB("C","conx","GCG_5303_Com_Type","PL",256,"Pl@!@Product_Line*!*Type@!@Type*!*Internal_Rate@!@Internal_Rate*!*External_Rate@!@External_Rate")
+	f.Intrinsic.String.Build("{0}***{1}***{2}",v.Screen.Form!txtRange1_Rate.Text,v.Screen.Form!txtRange2_Rate.Text,v.Screen.Form!txtRange3_Rate.Text,v.Local.sHold)
+	'Save SlideRangeCommissionRate	
+	f.ODBC.Connection!conx.ExecuteAndReturn("Select SlideRangeCom from GCG_5303_Com_Type where Product_Line = '~~'",v.Local.sRet)
+	f.Intrinsic.Control.If(v.Local.sRet,=,"")
+		f.Intrinsic.String.Build("Insert into GCG_5303_Com_Type (Product_Line,SlideRangeCom) values ('~~','{0}')",v.Local.sHold,v.Local.sSQL)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.String.Build("Update GCG_5303_Com_Type set SlideRangeCom = '{0}' where Product_Line = '~~'",v.Local.sHold,v.Local.sSQL)
+	f.Intrinsic.Control.EndIf
+	f.ODBC.Connection!conx.Execute(v.Local.sSQL)
+	
+	f.Intrinsic.UI.CloseWaitDialog
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdSave_Click.End
+
+Program.Sub.Bind_Grid.Start
+'Bind data to gsPLC : gsGrid for Product Line Commission with types: Flat/Slide and the Internal rate for Internal Sales Rep and External rate for Extenal Sales Rep
+F.Intrinsic.Control.Try
+	v.Local.sError.Declare
+
+	f.Data.DataTable.CreateFromSQL("C","conx","Select p.PRODUCT_LINE as PL,p.PRODUCT_LINE_DESC as Description,p.PRODUCT_LINE_NAME as Name, g.Type, g.Internal_Rate, g.External_Rate from V_Product_Line p left join GCG_5303_Com_Type g on p.Product_Line = g.Product_Line",True)
+
+	gui.Form.gsPLC.AddGridviewFromDatatable("GV","C")
+	Gui.Form.gsPLC.ColumnEdit("GV", "Type", "DropdownList","*!*Flat*!*Slide")
+	f.Intrinsic.Control.CallSub("Format_Grid")
+	gui.Form.gsPLC.MainView("GV")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+Program.Sub.Bind_Grid.End
+
+Program.Sub.Format_Grid.Start
+F.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	
+	gui.Form.gsPLC.SetColumnProperty("GV","PL","MinWidth","50")
+	gui.Form.gsPLC.SetColumnProperty("GV","PL","MaxWidth","50")
+	gui.Form.gsPLC.SetColumnProperty("GV","Description","MinWidth","70")
+	gui.Form.gsPLC.SetColumnProperty("GV","Description","MaxWidth","70")
+	gui.Form.gsPLC.SetColumnProperty("GV","Name","MinWidth","200")
+	gui.Form.gsPLC.SetColumnProperty("GV","Name","MaxWidth","200")
+	
+	gui.Form.gsPLC.SetColumnProperty("GV","Type","AllowEdit",True)
+	gui.Form.gsPLC.SetColumnProperty("GV","Type","ReadOnly",False)
+	gui.Form.gsPLC.SetColumnProperty("GV","Internal_rate","AllowEdit",True)
+	gui.Form.gsPLC.SetColumnProperty("GV","Internal_rate","ReadOnly",False)
+	gui.Form.gsPLC.SetColumnProperty("GV","External_Rate","AllowEdit",True)
+	gui.Form.gsPLC.SetColumnProperty("GV","External_Rate","ReadOnly",False)
+	
+	gui.Form.gsPLC.SetColumnProperty("GV","Internal_Rate","Caption","Internal Rate")
+	gui.Form.gsPLC.SetColumnProperty("GV","External_Rate","Caption","External Rate")
+	
+	Gui.Form.gsPLC.SetColumnProperty("GV","Internal_Rate","DisplayCustomNumeric","#0.00%")
+	Gui.Form.gsPLC.SetColumnProperty("GV","External_Rate","DisplayCustomNumeric","#0.00%")
+
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+Program.Sub.Format_Grid.End
+
+Program.Sub.Bind_Discount_Slide_Commission.Start
+f.Intrinsic.Control.Try
+	v.Local.sError.Declare
+	v.Local.sRet.Declare
+	
+	f.ODBC.Connection!conx.ExecuteAndReturn("Select SlideRangeCom from GCG_5303_Com_Type where Product_Line = '~~'",v.Local.sRet)
+	f.Intrinsic.Control.If(v.Local.sRet,<>,"")
+		f.Intrinsic.String.Split(v.Local.sRet,"***",v.Local.sRet)
+		gui.Form.txtRange1_Rate.Text(v.Local.sRet(0).Trim)
+		gui.Form.txtRange2_Rate.Text(v.Local.sRet(1).Trim)
+		gui.Form.txtRange3_Rate.Text(v.Local.sRet(2).Trim)
+	f.Intrinsic.Control.EndIf
+	
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)	
+F.Intrinsic.Control.EndTry
+Program.Sub.Bind_Discount_Slide_Commission.End
